@@ -56,10 +56,10 @@ void assign_score_withk_forward_cpu_kernel(
 
                 if (aggregate == SUM) {
                     // feature concat
-                     output[b*N*O + o*N + n] += 2 * points[b*N*M*O + kn*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
-                     output[b*N*O + o*N + n] -= points[b*N*M*O + n*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
-//                    output[b*N*O + o*N + n] += points[b*N*M*O + kn*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
-//                    output[b*N*O + o*N + n] -= centers[b*N*M*O + n*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
+//                     output[b*N*O + o*N + n] += 2 * points[b*N*M*O + kn*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
+//                     output[b*N*O + o*N + n] -= points[b*N*M*O + n*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
+                    output[b*N*O + o*N + n] += points[b*N*M*O + kn*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
+                    output[b*N*O + o*N + n] -= centers[b*N*M*O + n*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m];
 //                    atomicAdd(output + b*N*O + o*N + n,
 //                        points[b*N*M*O + kn*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m]
 //                           - centers[b*N*M*O + n*M*O + m*O + o] * scores[b*N*K*M + n*K*M + k*M + m]);
@@ -100,12 +100,12 @@ void assign_score_withk_backward_points_cpu_kernel(
                 int kn = knn_idx[b*N*K + n*K + k];
 //                atomicAdd(grad_points + b*N*M*O + kn*M*O + m*O + o,
 //                    scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n]);
-//                grad_points[b*N*M*O + kn*M*O + m*O + o] += scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
+                grad_points[b*N*M*O + kn*M*O + m*O + o] += scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
 //                atomicAdd(grad_centers + b*N*M*O + n*M*O + m*O + o,
 //                    - scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n]);
-//                grad_centers[b*N*M*O + n*M*O + m*O + o] -= scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
-                grad_points[b*N*M*O + kn*M*O + m*O + o] += 2 * scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
-                grad_points[b*N*M*O + n*M*O + m*O + o] -= scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
+                grad_centers[b*N*M*O + n*M*O + m*O + o] -= scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
+//                grad_points[b*N*M*O + kn*M*O + m*O + o] += 2 * scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
+//                grad_points[b*N*M*O + n*M*O + m*O + o] -= scores[b*N*K*M + n*K*M + k*M + m] * grad_out[b*O*N + o*N + n];
              }
         }
     }
