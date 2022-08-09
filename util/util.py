@@ -9,10 +9,11 @@ def cal_loss(pred, gold, smoothing=True):
     if smoothing:
         eps = 0.2
         n_class = pred.shape[1]  # the number of feature_dim of the output, which is output channels
-        labels = F.one_hot(gold, n_class)
-        labels = F.label_smooth(labels, epsilon=eps)
-        labels = paddle.squeeze(labels, axis=1)
-        loss = F.cross_entropy(pred, labels, soft_label=True)
+        one_hot = F.one_hot(gold, n_class)
+        one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
+        log_prb = F.log_softmax(pred, axis=1)
+
+        loss = -(one_hot * log_prb).sum(axis=1).mean()
     else:
         loss = F.cross_entropy(pred, gold, reduction='mean')
 

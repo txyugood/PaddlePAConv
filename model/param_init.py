@@ -65,6 +65,16 @@ def kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
         initializer(tensor)
         # return tensor.normal_(0, std)
 
+def kaiming_uniform_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
+
+    fan = _calculate_correct_fan(tensor, mode)
+    gain = calculate_gain(nonlinearity, a)
+    std = gain / math.sqrt(fan)
+    bound = math.sqrt(3.0) * std  # Calculate uniform bounds from standard deviation
+    with paddle.no_grad():
+        initializer = paddle.nn.initializer.Uniform(-bound, bound)
+        initializer(tensor)
+
 
 def xavier_uniform_(tensor, gain=1.):
     fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)

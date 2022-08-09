@@ -1,4 +1,5 @@
 import argparse
+import math
 import os
 
 import numpy as np
@@ -9,8 +10,9 @@ from paddle.optimizer import Momentum
 from paddle.optimizer.lr import CosineAnnealingDecay
 
 from model.DGCNN_PAConv import PAConv
-from model.param_init import kaiming_normal_, constant_
+from model.param_init import kaiming_normal_, constant_, kaiming_uniform_, _calculate_fan_in_and_fan_out
 from precise_bn import do_preciseBN
+from util.PAConv_util import ScoreNet
 from util.data_util import ModelNet40 as ModelNet40
 from util.util import cal_loss, load_cfg_from_cfg_file, merge_cfg_from_list, load_pretrained_model
 
@@ -62,7 +64,38 @@ def weight_init(m):
     elif isinstance(m, paddle.nn.BatchNorm1D):
         constant_(m.weight, 1)
         constant_(m.bias, 0)
+    # elif isinstance(m, paddle.nn.LayerList):
+    #     for layer in m:
+    #         weight_init_kaiming_uniform(layer)
 
+def weight_init_kaiming_uniform(m):
+    if isinstance(m, paddle.nn.Linear):
+        kaiming_uniform_(m.weight, a=math.sqrt(5))
+        if m.bias is not None:
+            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
+            bound = 1 / math.sqrt(fan_in)
+            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
+    elif isinstance(m, paddle.nn.Conv2D):
+        kaiming_uniform_(m.weight, a=math.sqrt(5))
+        if m.bias is not None:
+            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
+            bound = 1 / math.sqrt(fan_in)
+            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
+    elif isinstance(m, paddle.nn.Conv1D):
+        kaiming_uniform_(m.weight, a=math.sqrt(5))
+        if m.bias is not None:
+            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
+            bound = 1 / math.sqrt(fan_in)
+            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
+    elif isinstance(m, paddle.nn.BatchNorm2D):
+        constant_(m.weight, 1)
+        constant_(m.bias, 0)
+    elif isinstance(m, paddle.nn.BatchNorm1D):
+        constant_(m.weight, 1)
+        constant_(m.bias, 0)
+    elif isinstance(m, paddle.nn.LayerList):
+        for layer in m:
+            weight_init_kaiming_uniform(layer)
 
 def train(args):
     train_loader = DataLoader(
@@ -73,16 +106,20 @@ def train(args):
         num_workers=args.workers, batch_size=args.test_batch_size, shuffle=False, drop_last=False)
 
     model = PAConv(args)
-
     print(str(model))
 
     model.apply(weight_init)
+    # model.scorenet1.apply(weight_init_kaiming_uniform)
+    # model.scorenet2.apply(weight_init_kaiming_uniform)
+    # model.scorenet3.apply(weight_init_kaiming_uniform)
+    # model.scorenet4.apply(weight_init_kaiming_uniform)
     lr = CosineAnnealingDecay(learning_rate=args.lr, T_max=args.epochs, eta_min=args.lr / 100)
     opt = Momentum(parameters=model.parameters(), learning_rate=lr, momentum=args.momentum, weight_decay=1e-4)
 
     criterion = cal_loss
 
     best_test_acc = 0
+    load_pretrained_model(model, 'paconv_model.pdparams')
     for epoch in range(args.epochs):
         ####################
         # Train
