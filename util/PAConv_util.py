@@ -72,18 +72,18 @@ class ScoreNet(nn.Layer):
         if hidden_unit is None or len(hidden_unit) == 0:
             self.mlp_convs_nohidden = nn.Conv2D(in_channel, out_channel, 1, bias_attr=not last_bn)
             if self.last_bn:
-                self.mlp_bns_nohidden = nn.BatchNorm2D(out_channel, momentum=0.1)
+                self.mlp_bns_nohidden = nn.BatchNorm2D(out_channel)
 
         else:
             self.mlp_convs_hidden.append(
                 nn.Conv2D(in_channel, hidden_unit[0], 1, bias_attr=False))  # from in_channel to first hidden
-            self.mlp_bns_hidden.append(nn.BatchNorm2D(hidden_unit[0], momentum=0.1))
+            self.mlp_bns_hidden.append(nn.BatchNorm2D(hidden_unit[0]))
             for i in range(1, len(hidden_unit)):  # from 2nd hidden to next hidden to last hidden
                 self.mlp_convs_hidden.append(nn.Conv2D(hidden_unit[i - 1], hidden_unit[i], 1, bias_attr=False))
-                self.mlp_bns_hidden.append(nn.BatchNorm2D(hidden_unit[i], momentum=0.1))
+                self.mlp_bns_hidden.append(nn.BatchNorm2D(hidden_unit[i]))
             self.mlp_convs_hidden.append(
                 nn.Conv2D(hidden_unit[-1], out_channel, 1, bias_attr=not last_bn))  # from last hidden to out_channel
-            self.mlp_bns_hidden.append(nn.BatchNorm2D(out_channel, momentum=0.1))
+            self.mlp_bns_hidden.append(nn.BatchNorm2D(out_channel))
 
     def forward(self, xyz, calc_scores='softmax', bias_attr=0):
         B, _, N, K = xyz.shape

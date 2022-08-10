@@ -58,19 +58,19 @@ class PAConv(nn.Layer):
         self.add_parameter('matrice4', matrice4)
 
 
-        self.bn1 = nn.BatchNorm1D(o1, momentum=0.1)
-        self.bn2 = nn.BatchNorm1D(o2, momentum=0.1)
-        self.bn3 = nn.BatchNorm1D(o3, momentum=0.1)
-        self.bn4 = nn.BatchNorm1D(o4, momentum=0.1)
-        self.bn5 = nn.BatchNorm1D(1024, momentum=0.1)
+        self.bn1 = nn.BatchNorm1D(o1)
+        self.bn2 = nn.BatchNorm1D(o2)
+        self.bn3 = nn.BatchNorm1D(o3)
+        self.bn4 = nn.BatchNorm1D(o4)
+        self.bn5 = nn.BatchNorm1D(1024)
         self.conv5 = nn.Sequential(nn.Conv1D(512, 1024, kernel_size=1, bias_attr=False),
                                    self.bn5)
 
         self.linear1 = nn.Linear(2048, 512, bias_attr=False)
-        self.bn11 = nn.BatchNorm1D(512, momentum=0.1)
+        self.bn11 = nn.BatchNorm1D(512)
         self.dp1 = nn.Dropout(p=args.dropout)
         self.linear2 = nn.Linear(512, 256, bias_attr=False)
-        self.bn22 = nn.BatchNorm1D(256, momentum=0.1)
+        self.bn22 = nn.BatchNorm1D(256)
         self.dp2 = nn.Dropout(p=args.dropout)
         self.linear3 = nn.Linear(256, 40)
 
