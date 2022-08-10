@@ -1,6 +1,7 @@
 import argparse
 import math
 import os
+import random
 
 import numpy as np
 import paddle
@@ -22,6 +23,7 @@ def get_parser():
     parser.add_argument('--config', type=str, default='config/dgcnn_paconv.yaml', help='config file')
     parser.add_argument('--dataset_root', type=str, default=None, help='dataset root')
     parser.add_argument('--log_iters', type=int, default=10, help='dataset root')
+    parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--save_dir', type=str, default='./output', help='save dir')
     parser.add_argument('--model_path', type=str, default='./output/best_model.pdparams', help='model path')
     parser.add_argument('opts', help='see config/dgcnn_paconv.yaml for all options', default=None,
@@ -35,6 +37,7 @@ def get_parser():
     cfg['log_iters'] = args.log_iters
     cfg['save_dir'] = args.save_dir
     cfg['model_path'] = args.model_path
+    cfg['seed'] = args.seed
     cfg['workers'] = cfg.get('workers', 0)
     return cfg
 
@@ -47,7 +50,7 @@ def _init_(args):
 # weight initialization:
 def weight_init(m):
     if isinstance(m, paddle.nn.Linear):
-        kaiming_normal_(m.weight)
+        kaiming_normal_(m.weight, is_linear=True)
         if m.bias is not None:
             constant_(m.bias, 0)
     elif isinstance(m, paddle.nn.Conv2D):
@@ -64,9 +67,6 @@ def weight_init(m):
     elif isinstance(m, paddle.nn.BatchNorm1D):
         constant_(m.weight, 1)
         constant_(m.bias, 0)
-    # elif isinstance(m, paddle.nn.LayerList):
-    #     for layer in m:
-    #         weight_init_kaiming_uniform(layer)
 
 def weight_init_kaiming_uniform(m):
     if isinstance(m, paddle.nn.Linear):
@@ -109,17 +109,12 @@ def train(args):
     print(str(model))
 
     model.apply(weight_init)
-    # model.scorenet1.apply(weight_init_kaiming_uniform)
-    # model.scorenet2.apply(weight_init_kaiming_uniform)
-    # model.scorenet3.apply(weight_init_kaiming_uniform)
-    # model.scorenet4.apply(weight_init_kaiming_uniform)
     lr = CosineAnnealingDecay(learning_rate=args.lr, T_max=args.epochs, eta_min=args.lr / 100)
     opt = Momentum(parameters=model.parameters(), learning_rate=lr, momentum=args.momentum, weight_decay=1e-4)
 
     criterion = cal_loss
 
     best_test_acc = 0
-    load_pretrained_model(model, 'paconv_model.pdparams')
     for epoch in range(args.epochs):
         ####################
         # Train
@@ -152,10 +147,6 @@ def train(args):
         outstr = '[Train] %d, loss: %.6f, train acc: %.6f, ' % (epoch, train_loss * 1.0 / count, train_acc)
         print(outstr)
 
-        if epoch % 5 == 0:
-            do_preciseBN(
-                model, train_loader, False,
-                min(200, len(train_loader)))
         ####################
         # Test
         ####################
@@ -224,6 +215,11 @@ def test(args):
 if __name__ == "__main__":
     args = get_parser()
     _init_(args)
+
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    paddle.seed(args.seed)
+    paddle.framework.seed(args.seed)
 
     if not args.eval:
         train(args)

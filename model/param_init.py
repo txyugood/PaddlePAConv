@@ -26,13 +26,16 @@ def calculate_gain(nonlinearity, param=None):
         raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
 
 
-def _calculate_fan_in_and_fan_out(tensor):
+def _calculate_fan_in_and_fan_out(tensor, is_linear=False):
     dimensions = tensor.dim()
     if dimensions < 2:
         raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
-
-    num_input_fmaps = tensor.shape[1]
-    num_output_fmaps = tensor.shape[0]
+    if is_linear:
+        num_input_fmaps = tensor.shape[0]
+        num_output_fmaps = tensor.shape[1]
+    else:
+        num_input_fmaps = tensor.shape[1]
+        num_output_fmaps = tensor.shape[0]
     receptive_field_size = 1
     if tensor.dim() > 2:
         # math.prod is not always available, accumulate the product manually
@@ -44,20 +47,20 @@ def _calculate_fan_in_and_fan_out(tensor):
 
     return fan_in, fan_out
 
-def _calculate_correct_fan(tensor, mode):
+def _calculate_correct_fan(tensor, mode, is_linear=False):
     mode = mode.lower()
     valid_modes = ['fan_in', 'fan_out']
     if mode not in valid_modes:
         raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes))
 
-    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
+    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor, is_linear)
     return fan_in if mode == 'fan_in' else fan_out
 
-def kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
+def kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu', is_linear=False):
     if 0 in tensor.shape:
         warnings.warn("Initializing zero-element tensors is a no-op")
         return tensor
-    fan = _calculate_correct_fan(tensor, mode)
+    fan = _calculate_correct_fan(tensor, mode, is_linear)
     gain = calculate_gain(nonlinearity, a)
     std = gain / math.sqrt(fan)
     with paddle.no_grad():
