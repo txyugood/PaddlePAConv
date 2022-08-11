@@ -17,14 +17,7 @@ modelnet40数据集下载地址:
 
 [https://aistudio.baidu.com/aistudio/datasetdetail/161759](https://aistudio.baidu.com/aistudio/datasetdetail/161759)
 
-最优模型下载地址:
-
-[https://pan.baidu.com/s/16h7UcMDzkCbkCP09slRaSw](https://pan.baidu.com/s/16h7UcMDzkCbkCP09slRaSw)
-
-提取码: 2jh9 
-
-
-
+最优模型为项目目录下的best_model.pdparams文件。
 
 
 ## 4.环境依赖
@@ -36,7 +29,7 @@ PaddlePaddle == 2.3.1
 
 ```shell
 cd PaddlePAConv
-nohup python -u main.py --config config/dgcnn_paconv_train.yaml --dataset_root data/modelnet40_ply_hdf5_2048 > train.log &
+nohup python -u main.py --config config/dgcnn_paconv_train.yaml --dataset_root data/modelnet40_ply_hdf5_2048 --seed 9999 > train.log &
 tail -f train.log
 ```
 config: 配置文件地址
@@ -201,7 +194,6 @@ PaddlePAConv
 │   ├── DGCNN_PAConv.py # 模型网络
 │   ├── __init__.py
 │   └── param_init.py
-├── precise_bn.py 
 ├── test.log # 测试日志
 ├── test_tipc # TIPC测试目录
 │   ├── README.md

@@ -11,9 +11,7 @@ from paddle.optimizer import Momentum
 from paddle.optimizer.lr import CosineAnnealingDecay
 
 from model.DGCNN_PAConv import PAConv
-from model.param_init import kaiming_normal_, constant_, kaiming_uniform_, _calculate_fan_in_and_fan_out
-from precise_bn import do_preciseBN
-from util.PAConv_util import ScoreNet
+from model.param_init import kaiming_normal_, constant_
 from util.data_util import ModelNet40 as ModelNet40
 from util.util import cal_loss, load_cfg_from_cfg_file, merge_cfg_from_list, load_pretrained_model
 
@@ -23,7 +21,7 @@ def get_parser():
     parser.add_argument('--config', type=str, default='config/dgcnn_paconv.yaml', help='config file')
     parser.add_argument('--dataset_root', type=str, default=None, help='dataset root')
     parser.add_argument('--log_iters', type=int, default=10, help='dataset root')
-    parser.add_argument('--seed', type=int, default=0, help='random seed')
+    parser.add_argument('--seed', type=int, default=9999, help='random seed')
     parser.add_argument('--save_dir', type=str, default='./output', help='save dir')
     parser.add_argument('--model_path', type=str, default='./output/best_model.pdparams', help='model path')
     parser.add_argument('opts', help='see config/dgcnn_paconv.yaml for all options', default=None,
@@ -68,34 +66,6 @@ def weight_init(m):
         constant_(m.weight, 1)
         constant_(m.bias, 0)
 
-def weight_init_kaiming_uniform(m):
-    if isinstance(m, paddle.nn.Linear):
-        kaiming_uniform_(m.weight, a=math.sqrt(5))
-        if m.bias is not None:
-            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
-            bound = 1 / math.sqrt(fan_in)
-            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
-    elif isinstance(m, paddle.nn.Conv2D):
-        kaiming_uniform_(m.weight, a=math.sqrt(5))
-        if m.bias is not None:
-            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
-            bound = 1 / math.sqrt(fan_in)
-            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
-    elif isinstance(m, paddle.nn.Conv1D):
-        kaiming_uniform_(m.weight, a=math.sqrt(5))
-        if m.bias is not None:
-            fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
-            bound = 1 / math.sqrt(fan_in)
-            paddle.nn.initializer.Uniform(-bound, bound)(m.bias)
-    elif isinstance(m, paddle.nn.BatchNorm2D):
-        constant_(m.weight, 1)
-        constant_(m.bias, 0)
-    elif isinstance(m, paddle.nn.BatchNorm1D):
-        constant_(m.weight, 1)
-        constant_(m.bias, 0)
-    elif isinstance(m, paddle.nn.LayerList):
-        for layer in m:
-            weight_init_kaiming_uniform(layer)
 
 def train(args):
     train_loader = DataLoader(
