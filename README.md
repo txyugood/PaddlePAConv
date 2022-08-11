@@ -6,7 +6,7 @@
 
 
 ## 2.复现精度
-在UCF-101数据集上spilt1的测试效果如下表。
+在modelnet40数据集上的测试效果如下表。
 
 | NetWork | epochs | opt | num points | batch_size | dataset | acc | vote acc | 
 | --- | --- | --- | --- | --- | --- | --- | --- | 
